@@ -10,6 +10,8 @@ signal redo_action
 signal toggle_brush_color_picker
 signal brush_size_changed(size: float)
 signal tool_changed(t: Types.Tool)
+signal zen_mode_changed(zen_mode : bool)
+signal fullscreen_changed(fullscreen : bool)
 
 # -------------------------------------------------------------------------------------------------
 const BUTTON_HOVER_COLOR = Color("50ffd6")
@@ -33,6 +35,8 @@ const BUTTON_NORMAL_COLOR = Color.WHITE
 @onready var _tool_btn_line: FlatTextureButton = $Console/Left/LineToolButton
 @onready var _tool_btn_eraser: FlatTextureButton = $Console/Left/EraserToolButton
 @onready var _tool_btn_selection: FlatTextureButton = $Console/Left/SelectionToolButton
+@onready var _ui_btn_zen_mode: FlatTextureButton = $Console/Right/ZenModeButton
+@onready var _ui_btn_fullscreen: FlatTextureButton = $Console/Right/FullScreenButton
 
 var _last_active_tool_button: FlatTextureButton
 
@@ -65,6 +69,8 @@ func _ready() -> void:
 	_tool_btn_line.pressed.connect(_on_line_tool_pressed)
 	_tool_btn_eraser.pressed.connect(_on_eraser_tool_pressed)
 	_tool_btn_selection.pressed.connect(_on_select_tool_pressed)
+	_ui_btn_zen_mode.pressed.connect(_on_zen_mode_pressed)
+	_ui_btn_fullscreen.pressed.connect(_on_fullscreen_pressed)
 	
 # -------------------------------------------------------------------------------------------------
 func enable_tool(tool_type: Types.Tool) -> void:
@@ -95,7 +101,15 @@ func set_brush_color(color: Color) -> void:
 # -------------------------------------------------------------------------------------------------
 func get_brush_color_button() -> Control:
 	return _color_button
+	
+# -------------------------------------------------------------------------------------------------
+func set_fullscreen_state(fullscreen: bool) -> void:
+	_ui_btn_fullscreen.button_pressed = fullscreen
 
+# -------------------------------------------------------------------------------------------------
+func set_zen_mode_state(zen_mode: bool) -> void:
+	_ui_btn_zen_mode.button_pressed = zen_mode
+	
 # -------------------------------------------------------------------------------------------------
 func _on_keybinding_changed(action: KeybindingsManager.Action) -> void:
 	var label := action.event_label()
@@ -174,6 +188,14 @@ func _change_active_tool_button(btn: TextureButton) -> void:
 		_last_active_tool_button.toggle()
 	_last_active_tool_button = btn
 
+# -------------------------------------------------------------------------------------------------
+func _on_zen_mode_pressed() -> void:
+	zen_mode_changed.emit(_ui_btn_zen_mode.button_pressed)
+
+# -------------------------------------------------------------------------------------------------
+func _on_fullscreen_pressed() -> void:
+	fullscreen_changed.emit(_ui_btn_fullscreen.button_pressed)
+	
 # -------------------------------------------------------------------------------------------------
 func _on_active_project_changed(previous_project: Project, current_project: Project) -> void:
 	_update_undo_redo_buttons()

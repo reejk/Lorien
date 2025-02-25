@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://c0ral10lvpo7f"]
+[gd_scene load_steps=21 format=3 uid="uid://c0ral10lvpo7f"]
 
 [ext_resource type="Texture2D" uid="uid://c4kv3i7fmom58" path="res://Assets/Icons/save_file.png" id="1"]
 [ext_resource type="Texture2D" uid="uid://dxi6gc6npiskq" path="res://Assets/Icons/open_file.png" id="2"]
@@ -14,6 +14,8 @@
 [ext_resource type="Script" path="res://UI/Components/FlatTextureButton.gd" id="13"]
 [ext_resource type="Theme" uid="uid://u5qnpgxqykiv" path="res://UI/Themes/theme_dark.tres" id="15"]
 [ext_resource type="Texture2D" uid="uid://ddxis8f7tvg66" path="res://Assets/Icons/selection_tool.png" id="16"]
+[ext_resource type="Texture2D" uid="uid://b4mgx1os6mdeg" path="res://Assets/Icons/fullscreen.png" id="16_gu260"]
+[ext_resource type="Texture2D" uid="uid://r233fnxk5qkf" path="res://Assets/Icons/menu.png" id="17_jcs8i"]
 [ext_resource type="Texture2D" uid="uid://0qicbkag5jd3" path="res://Assets/Icons/circle_tool.png" id="19"]
 
 [sub_resource type="StyleBoxEmpty" id="2"]
@@ -223,6 +225,28 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 alignment = 2
+
+[node name="FullScreenButton" type="TextureButton" parent="Console/Right"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+tooltip_text = "TOOLBAR_TOOLTIP_FULLSCREEN"
+toggle_mode = true
+texture_normal = ExtResource("16_gu260")
+script = ExtResource("13")
+hover_tint = Color(0.662745, 0.945098, 0.87451, 1)
+pressed_tint = Color(0.572549, 1, 0.894118, 1)
+
+[node name="ZenModeButton" type="TextureButton" parent="Console/Right"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+tooltip_text = "TOOLBAR_TOOLTIP_ZEN_MODE"
+toggle_mode = true
+texture_normal = ExtResource("17_jcs8i")
+script = ExtResource("13")
+hover_tint = Color(0.662745, 0.945098, 0.87451, 1)
+pressed_tint = Color(0.572549, 1, 0.894118, 1)
 
 [node name="KeepMe" type="Control" parent="Console/Right"]
 layout_mode = 2

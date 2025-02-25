@@ -66,6 +66,8 @@ func _ready() -> void:
 	_toolbar.save_project.connect(_on_save_project)
 	_toolbar.brush_size_changed.connect(_on_brush_size_changed)
 	_toolbar.tool_changed.connect(_on_tool_changed)
+	_toolbar.zen_mode_changed.connect(_on_zen_mode_changed)
+	_toolbar.fullscreen_changed.connect(_on_fullscreen_changed)
 	
 	_menubar.create_new_project.connect(_on_create_new_project)
 	_menubar.project_selected.connect(_on_project_selected)
@@ -238,6 +240,10 @@ func _apply_state() -> void:
 
 # -------------------------------------------------------------------------------------------------
 func _on_quit() -> void:
+	if !_ui_visible:
+		_toggle_zen_mode()
+		return
+	
 	if ProjectManager.has_unsaved_changes():
 		_exit_requested = true
 		_unsaved_changes_window.popup_centered()
@@ -252,6 +258,7 @@ func _toggle_zen_mode() -> void:
 	_menubar.visible = _ui_visible
 	_statusbar.visible = _ui_visible
 	_toolbar.visible = _ui_visible
+	_toolbar.set_zen_mode_state(!_ui_visible)
 
 # -------------------------------------------------------------------------------------------------
 func _on_files_dropped(files: PackedStringArray) -> void:
@@ -344,8 +351,10 @@ func _toggle_fullscreen() -> void:
 	match get_window().mode:
 		Window.MODE_EXCLUSIVE_FULLSCREEN, Window.MODE_FULLSCREEN:
 			get_window().mode = Window.MODE_WINDOWED
+			_toolbar.set_fullscreen_state(false)
 		_:
 			get_window().mode = Window.MODE_FULLSCREEN
+			_toolbar.set_fullscreen_state(true)
 
 # -------------------------------------------------------------------------------------------------
 func _on_brush_color_changed(brush_color: Color) -> void:
@@ -452,6 +461,14 @@ func _on_redo_action() -> void:
 # -------------------------------------------------------------------------------------------------
 func _on_tool_changed(tool_type: int) -> void:
 	_canvas.use_tool(tool_type)
+
+# -------------------------------------------------------------------------------------------------
+func _on_zen_mode_changed(zen_mode: bool) -> void:
+	_toggle_zen_mode()
+
+# -------------------------------------------------------------------------------------------------
+func _on_fullscreen_changed(fullscreen: bool) -> void:
+	_toggle_fullscreen()
 
 # -------------------------------------------------------------------------------------------------
 func _on_save_unsaved_changes() -> void:
