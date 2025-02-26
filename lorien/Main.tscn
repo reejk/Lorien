@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://2uaupgd20h03"]
+[gd_scene load_steps=17 format=3 uid="uid://2uaupgd20h03"]
 
 [ext_resource type="Script" path="res://Main.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://c4u5gk5n2aiom" path="res://InfiniteCanvas/InfiniteCanvas.tscn" id="2"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://dsxmmndtd4r2c" path="res://UI/ColorPalettePicker.tscn" id="13"]
 [ext_resource type="PackedScene" uid="uid://6jilea2pwjuk" path="res://UI/Dialogs/EditPaletteDialog.tscn" id="14"]
 [ext_resource type="PackedScene" uid="uid://bl2x4yif2wrml" path="res://UI/Dialogs/DeletePaletteDialog.tscn" id="15"]
+[ext_resource type="PackedScene" uid="uid://btxn72gq4j1af" path="res://UI/Dialogs/MultiplayerDialog.tscn" id="15_ly8jm"]
 
 [sub_resource type="StyleBoxFlat" id="1"]
 bg_color = Color(0.207843, 0.211765, 0.227451, 1)
@@ -175,6 +176,16 @@ exclusive = true
 unresizable = true
 
 [node name="UnsavedChangesDialog" parent="UnsavedChangesWindow" instance=ExtResource("7")]
+
+[node name="MultiplayerWindow" type="Window" parent="."]
+auto_translate_mode = 1
+title = "MULTIPLAYER_TITLE"
+initial_position = 2
+size = Vector2i(512, 450)
+visible = false
+exclusive = true
+
+[node name="MultiplayerDialog" parent="MultiplayerWindow" instance=ExtResource("15_ly8jm")]
 
 [node name="FileDialog" type="FileDialog" parent="."]
 initial_position = 2

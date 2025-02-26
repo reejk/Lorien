@@ -29,6 +29,12 @@ const RENDERING_BACKGROUND_FPS			:= "rendering_background_fps"
 const RENDERING_BRUSH_ROUNDING			:= "rendering_brush_rounding"
 
 # -------------------------------------------------------------------------------------------------
+const MULTIPLAYER_CONNECT_TO_ADDRESS	:= "multiplayer_connect_to_address"
+const MULTIPLAYER_CONNECT_TO_PORT		:= "multiplayer_connect_to_port"
+const MULTIPLAYER_LISTEN_PORT			:= "multiplayer_listen_port"
+const MULTIPLAYER_MAXIMUM_CLIENTS		:= "multiplayer_maximum_clients"
+
+# -------------------------------------------------------------------------------------------------
 var _config_file := ConfigFile.new()
 var _i18n := I18nParser.new()
 var locales: PackedStringArray

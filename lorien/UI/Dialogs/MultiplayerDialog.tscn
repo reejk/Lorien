@@ -1,0 +1,132 @@
+[gd_scene load_steps=4 format=3 uid="uid://btxn72gq4j1af"]
+
+[ext_resource type="Theme" uid="uid://u5qnpgxqykiv" path="res://UI/Themes/theme_dark.tres" id="1_fkxb3"]
+[ext_resource type="Script" path="res://UI/Dialogs/MultiplayerDialog.gd" id="2_j8si1"]
+
+[sub_resource type="StyleBoxEmpty" id="1"]
+
+[node name="MultiplayerDialog" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_fkxb3")
+script = ExtResource("2_j8si1")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="ConnectToAddress" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/ConnectToAddress"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+text = "MULTIPLAYER_CONNECT_TO_ADDRESS"
+
+[node name="ConnectToAddress" type="LineEdit" parent="VBoxContainer/MarginContainer/VBoxContainer/ConnectToAddress"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+placeholder_text = "eg. 127.0.0.1"
+
+[node name="ConnectToPort" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/ConnectToPort"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+text = "MULTIPLAYER_CONNECT_TO_PORT"
+
+[node name="ConnectToPort" type="SpinBox" parent="VBoxContainer/MarginContainer/VBoxContainer/ConnectToPort"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+min_value = 1.0
+max_value = 65536.0
+value = 10913.0
+rounded = true
+
+[node name="ConnectButton" type="Button" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "MULTIPLAYER_CONNECT"
+
+[node name="ConnectError" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MULTIPLAYER_CONNECTION_ERROR"
+horizontal_alignment = 1
+
+[node name="HSeparator3" type="HSeparator" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_constants/separation = 12
+theme_override_styles/separator = SubResource("1")
+
+[node name="ListenPort" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/ListenPort"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+text = "MULTIPLAYER_LISTEN_PORT"
+
+[node name="ListenPort" type="SpinBox" parent="VBoxContainer/MarginContainer/VBoxContainer/ListenPort"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+min_value = 1.0
+max_value = 65536.0
+value = 10913.0
+rounded = true
+
+[node name="MaximumClients" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/MaximumClients"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+text = "MULTIPLAYER_SERVER_MAXIMUM_CLIENTS
+"
+
+[node name="MaximumClients" type="SpinBox" parent="VBoxContainer/MarginContainer/VBoxContainer/MaximumClients"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+min_value = 1.0
+max_value = 20.0
+value = 5.0
+rounded = true
+
+[node name="ListenButton" type="Button" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "MULTIPLAYER_LISTEN"
+
+[node name="ListenError" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MULTIPLAYER_CONNECTION_ERROR"
+horizontal_alignment = 1

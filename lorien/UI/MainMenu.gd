@@ -4,6 +4,7 @@ extends PopupMenu
 # -------------------------------------------------------------------------------------------------
 signal open_about_dialog
 signal open_settings_dialog
+signal open_multiplayer_dialog
 signal open_url(url: String)
 signal open_project(filepath: String)
 signal save_project
@@ -17,10 +18,11 @@ const ITEM_SAVE 		:= 1
 const ITEM_SAVE_AS 		:= 2
 const ITEM_EXPORT 		:= 3
 const ITEM_SETTINGS 	:= 4
-const ITEM_MANUAL 		:= 5
-const ITEM_BUG_TRACKER 	:= 6
-const ITEM_ABOUT 		:= 7
-const ITEM_QUIT 		:= 8
+const ITEM_MULTIPLAYER 	:= 5
+const ITEM_MANUAL 		:= 6
+const ITEM_BUG_TRACKER 	:= 7
+const ITEM_ABOUT 		:= 8
+const ITEM_QUIT 		:= 9
 
 # -------------------------------------------------------------------------------------------------
 @export var file_dialog_path: NodePath
@@ -49,6 +51,7 @@ func _set_items() -> void:
 	add_item(tr("MENU_SAVE_AS"), ITEM_SAVE_AS)
 	add_item(tr("MENU_EXPORT"), ITEM_EXPORT, export_action.event.get_keycode_with_modifiers())
 	add_item(tr("MENU_SETTINGS"), ITEM_SETTINGS)
+	add_item(tr("MENU_MULTIPLAYER"), ITEM_MULTIPLAYER)
 	add_separator()
 	add_item(tr("MENU_MANUAL"), ITEM_MANUAL)
 	add_item(tr("MENU_BUG_TRACKER"), ITEM_BUG_TRACKER)
@@ -63,6 +66,7 @@ func _on_item_pressed(id: int) -> void:
 		ITEM_SAVE_AS: save_project_as.emit()
 		ITEM_EXPORT: export_svg.emit()
 		ITEM_SETTINGS: open_settings_dialog.emit()
+		ITEM_MULTIPLAYER: open_multiplayer_dialog.emit()
 		ITEM_MANUAL: open_url.emit("https://github.com/mbrlabs/lorien/blob/main/docs/manuals/manual_v0.6.0.md")
 		ITEM_BUG_TRACKER: open_url.emit("https://github.com/mbrlabs/lorien/issues")
 		ITEM_ABOUT: open_about_dialog.emit()

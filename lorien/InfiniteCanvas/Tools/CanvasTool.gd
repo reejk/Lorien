@@ -95,7 +95,7 @@ func remove_all_stroke_points() -> void:
 
 # -------------------------------------------------------------------------------------------------
 func get_current_brush_stroke() -> BrushStroke:
-	return _canvas._current_stroke
+	return _canvas._my_state._current_stroke
 
 # -------------------------------------------------------------------------------------------------
 func end_stroke() -> void:

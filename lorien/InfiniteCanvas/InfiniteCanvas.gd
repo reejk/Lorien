@@ -25,21 +25,19 @@ const PLAYER = preload("res://Misc/Player/Player.tscn")
 var info := Types.CanvasInfo.new()
 var _is_enabled := false
 var _background_color: Color
-var _brush_color := Config.DEFAULT_BRUSH_COLOR
-var _brush_size := Config.DEFAULT_BRUSH_SIZE: set = set_brush_size
-var _current_stroke: BrushStroke
 var _current_project: Project
 var _use_optimizer := true
-var _optimizer: BrushStrokeOptimizer
 var _player: Player = null
 var _player_enabled := false
+var _peer_states: Dictionary = {}
+var _my_state := InfiniteCanvasPeerState.create()
 
 # -------------------------------------------------------------------------------------------------
 func _ready() -> void:
-	_optimizer = BrushStrokeOptimizer.new()
-	_brush_size = Settings.get_value(Settings.GENERAL_DEFAULT_BRUSH_SIZE, Config.DEFAULT_BRUSH_SIZE)
+	_peer_states[multiplayer.get_unique_id()] = _my_state
+	
 	set_background_color(Settings.get_value(Settings.APPEARANCE_CANVAS_COLOR, Config.DEFAULT_CANVAS_COLOR))
-	_active_tool._on_brush_size_changed(_brush_size)
+	_active_tool._on_brush_size_changed(_my_state._brush_size)
 	_active_tool.enabled = false
 	
 	var constant_pressure: bool = Settings.get_value(
@@ -65,6 +63,36 @@ func _ready() -> void:
 	#_viewport.size = get_window().size
 
 	info.pen_inverted = false
+	
+	multiplayer.peer_connected.connect(_on_player_connected)
+	multiplayer.peer_disconnected.connect(_on_player_disconnected)
+
+# -------------------------------------------------------------------------------------------------
+func _on_player_connected(id: int) -> void:
+	_peer_states[id] = InfiniteCanvasPeerState.create()
+	print('player connect ', id, '; states: ', _peer_states.keys())
+	
+	if multiplayer.is_server():
+		_known_peers.rpc_id(id, id, _peer_states.keys())
+
+# -------------------------------------------------------------------------------------------------
+func _on_player_disconnected(id: int) -> void:
+	print('player disconnect ', id, '; states: ', _peer_states.keys())
+	
+	var state: InfiniteCanvasPeerState = _peer_states[id]
+	if state._current_stroke:
+		_end_state_stroke(state)
+		
+	_peer_states.erase(id)
+
+# -------------------------------------------------------------------------------------------------
+@rpc("any_peer", "call_remote", "reliable")
+func _known_peers(self_id, peers: Array) -> void:
+	_peer_states[self_id] = _my_state
+	
+	for id in peers:
+		if id not in _peer_states:
+			_peer_states[id] = InfiniteCanvasPeerState.create()
 
 # -------------------------------------------------------------------------------------------------
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -102,6 +130,26 @@ func _process_event(event: InputEvent) -> void:
 	if !get_tree().root.get_viewport().is_input_handled():
 		if _active_tool.enabled:
 			_active_tool.tool_event(event)
+
+# -------------------------------------------------------------------------------------------------
+func undo() -> void:
+	_undo.rpc()
+
+@rpc("any_peer", "call_local", "reliable")
+func _undo() -> void:
+	var project: Project = ProjectManager.get_active_project()
+	if project.undo_redo.has_undo():
+		project.undo_redo.undo()
+
+# -------------------------------------------------------------------------------------------------
+func redo() -> void:
+	_redo.rpc()
+
+@rpc("any_peer", "call_local", "reliable")
+func _redo() -> void:
+	var project: Project = ProjectManager.get_active_project()
+	if project.undo_redo.has_redo():
+		project.undo_redo.redo() 
 
 # -------------------------------------------------------------------------------------------------
 func center_to_mouse() -> void:
@@ -205,6 +253,10 @@ func take_screenshot() -> Image:
 
 # -------------------------------------------------------------------------------------------------
 func add_stroke(stroke: BrushStroke) -> void:
+	_add_stroke.rpc(stroke)
+	
+@rpc("any_peer", "call_local", "reliable")
+func _add_stroke(stroke: BrushStroke) -> void:
 	if _current_project != null:
 		_current_project.strokes.append(stroke)
 		_strokes_parent.add_child(stroke)
@@ -213,77 +265,112 @@ func add_stroke(stroke: BrushStroke) -> void:
 
 # -------------------------------------------------------------------------------------------------
 func add_stroke_point(point: Vector2, pressure: float = 1.0) -> void:
-	_current_stroke.add_point(point, pressure)
-	if _use_optimizer:
-		_optimizer.optimize(_current_stroke)
-	_current_stroke.refresh()
+	_add_stroke_point.rpc(point, pressure)
 
+@rpc("any_peer", "call_local", "reliable")
+func _add_stroke_point(point: Vector2, pressure: float) -> void:
+	var state: InfiniteCanvasPeerState = _peer_states[multiplayer.get_remote_sender_id()]
+	state._current_stroke.add_point(point, pressure)
+	if _use_optimizer:
+		state._optimizer.optimize(state._current_stroke)
+	state._current_stroke.refresh()
+	
 # -------------------------------------------------------------------------------------------------
 func remove_last_stroke_point() -> void:
-	_current_stroke.remove_last_point()
+	_remove_last_stroke_point.rpc()
+
+@rpc("any_peer", "call_local", "reliable")
+func _remove_last_stroke_point() -> void:
+	var state: InfiniteCanvasPeerState = _peer_states[multiplayer.get_remote_sender_id()]
+	state._current_stroke.remove_last_point()
 
 # -------------------------------------------------------------------------------------------------
 func remove_all_stroke_points() -> void:
-	_current_stroke.remove_all_points()
+	_remove_all_stroke_points.rpc()
+
+@rpc("any_peer", "call_local", "reliable")
+func _remove_all_stroke_points() -> void:
+	var state: InfiniteCanvasPeerState = _peer_states[multiplayer.get_remote_sender_id()]
+	state._current_stroke.remove_all_points()
 
 # -------------------------------------------------------------------------------------------------
 func is_drawing() -> bool:
-	return _current_stroke != null 
+	return _my_state._current_stroke != null 
 
 # -------------------------------------------------------------------------------------------------
 func start_stroke() -> void:
-	_current_stroke = BRUSH_STROKE.instantiate()
-	_current_stroke.size = _brush_size
-	_current_stroke.color = _brush_color
+	_start_stroke.rpc()
+
+@rpc("any_peer", "call_local", "reliable")
+func _start_stroke() -> void:
+	var state: InfiniteCanvasPeerState = _peer_states[multiplayer.get_remote_sender_id()]
 	
-	_strokes_parent.add_child(_current_stroke)
-	_optimizer.reset()
+	state._current_stroke = BRUSH_STROKE.instantiate()
+	state._current_stroke.size = state._brush_size
+	state._current_stroke.color = state._brush_color
+	
+	_strokes_parent.add_child(state._current_stroke)
+	state._optimizer.reset()
 
 # -------------------------------------------------------------------------------------------------
 func end_stroke() -> void:
-	if _current_stroke != null:
-		var points: Array = _current_stroke.points
-		if points.size() <= 1 || (points.size() == 2 && points.front().is_equal_approx(points.back())):
-			_strokes_parent.remove_child(_current_stroke)
-			_current_stroke.queue_free()
-		else:
-			if _use_optimizer:
-				print("Stroke points: %d (%d removed by optimizer)" % [
-					_current_stroke.points.size(), 
-					_optimizer.points_removed,
-				])
-			else:
-				print("Stroke points: %d" % _current_stroke.points.size())
-			
-			# TODO: not sure if needed here
-			_current_stroke.refresh()
-			
-			# Colliders for the platformer easter-egg
-			if _player_enabled:
-				_current_stroke.enable_collider(true)
-			
-			# Remove the line temporally from the node tree, so the adding is registered in the undo-redo histrory below
-			_strokes_parent.remove_child(_current_stroke)
-			
-			# TODO(gd4): verify that the undo-redo system with the callables work properly
-			_current_project.undo_redo.create_action("Stroke")
-			_current_project.undo_redo.add_undo_method(undo_last_stroke)
-			_current_project.undo_redo.add_undo_reference(_current_stroke)
-			_current_project.undo_redo.add_do_method(_strokes_parent.add_child.bind(_current_stroke))
-			_current_project.undo_redo.add_do_property(info, "stroke_count", info.stroke_count + 1)
-			_current_project.undo_redo.add_do_property(info, "point_count", info.point_count + _current_stroke.points.size())
-			_current_project.undo_redo.add_do_method(_current_project.add_stroke.bind(_current_stroke))
-			_current_project.undo_redo.commit_action()
+	_end_stroke.rpc()
+
+@rpc("any_peer", "call_local", "reliable")
+func _end_stroke() -> void:
+	var state: InfiniteCanvasPeerState = _peer_states[multiplayer.get_remote_sender_id()]
+	
+	if state._current_stroke != null:
+		_end_state_stroke(state)
 		
-		_current_stroke = null
+# -------------------------------------------------------------------------------------------------
+func _end_state_stroke(state: InfiniteCanvasPeerState) -> void:
+	var points: Array = state._current_stroke.points
+	if points.size() <= 1 || (points.size() == 2 && points.front().is_equal_approx(points.back())):
+		_strokes_parent.remove_child(state._current_stroke)
+		state._current_stroke.queue_free()
+	else:
+		if _use_optimizer:
+			print("Stroke points: %d (%d removed by optimizer)" % [
+				state._current_stroke.points.size(), 
+				state._optimizer.points_removed,
+			])
+		else:
+			print("Stroke points: %d" % state._current_stroke.points.size())
+		
+		# TODO: not sure if needed here
+		state._current_stroke.refresh()
+		
+		# Colliders for the platformer easter-egg
+		if _player_enabled:
+			state._current_stroke.enable_collider(true)
+		
+		# Remove the line temporally from the node tree, so the adding is registered in the undo-redo histrory below
+		_strokes_parent.remove_child(state._current_stroke)
+		
+		# TODO(gd4): verify that the undo-redo system with the callables work properly
+		_current_project.undo_redo.create_action("Stroke")
+		_current_project.undo_redo.add_undo_method(_undo_last_stroke)
+		_current_project.undo_redo.add_undo_reference(state._current_stroke)
+		_current_project.undo_redo.add_do_method(_strokes_parent.add_child.bind(state._current_stroke))
+		_current_project.undo_redo.add_do_property(info, "stroke_count", info.stroke_count + 1)
+		_current_project.undo_redo.add_do_property(info, "point_count", info.point_count + state._current_stroke.points.size())
+		_current_project.undo_redo.add_do_method(_current_project.add_stroke.bind(state._current_stroke))
+		_current_project.undo_redo.commit_action()
+	
+	state._current_stroke = null
 
 # -------------------------------------------------------------------------------------------------
 func add_strokes(strokes: Array) -> void:
+	_add_strokes.rpc(strokes)
+
+@rpc("any_peer", "call_local", "reliable")
+func _add_strokes(strokes: Array) -> void:
 	_current_project.undo_redo.create_action("Add Strokes")
 	var point_count := 0
 	for stroke: BrushStroke in strokes:
 		point_count += stroke.points.size()
-		_current_project.undo_redo.add_undo_method(undo_last_stroke)
+		_current_project.undo_redo.add_undo_method(_undo_last_stroke)
 		_current_project.undo_redo.add_undo_reference(stroke)
 		_current_project.undo_redo.add_do_method(_strokes_parent.add_child.bind(stroke))
 		_current_project.undo_redo.add_do_method(_current_project.add_stroke.bind(stroke))
@@ -313,8 +400,8 @@ func use_project(project: Project) -> void:
 	_grid.queue_redraw()
 	
 # -------------------------------------------------------------------------------------------------
-func undo_last_stroke() -> void:
-	if _current_stroke == null && !_current_project.strokes.is_empty():
+func _undo_last_stroke() -> void:
+	if _my_state._current_stroke == null && !_current_project.strokes.is_empty():
 		var stroke: BrushStroke = _strokes_parent.get_child(_strokes_parent.get_child_count() - 1)
 		_strokes_parent.remove_child(stroke)
 		_current_project.remove_last_stroke()
@@ -323,15 +410,29 @@ func undo_last_stroke() -> void:
 
 # -------------------------------------------------------------------------------------------------
 func set_brush_size(s: int) -> void:
-	_brush_size = s
+	_my_state._brush_size = s
 	if _active_tool != null:
-		_active_tool._on_brush_size_changed(_brush_size)
+		_active_tool._on_brush_size_changed(_my_state._brush_size)
+		
+	_set_brush_size.rpc(s)
+
+@rpc("any_peer", "call_remote", "reliable")
+func _set_brush_size(s: int) -> void:
+	var state: InfiniteCanvasPeerState = _peer_states[multiplayer.get_remote_sender_id()]
+	state._brush_size = s
 
 # -------------------------------------------------------------------------------------------------
 func set_brush_color(color: Color) -> void:
-	_brush_color = color
+	_my_state._brush_color = color
 	if _active_tool != null:
-		_active_tool._on_brush_color_changed(_brush_color)
+		_active_tool._on_brush_color_changed(_my_state._brush_color)
+	
+	_set_brush_color.rpc(color)
+
+@rpc("any_peer", "call_remote", "reliable")
+func _set_brush_color(color: Color) -> void:
+	var state: InfiniteCanvasPeerState = _peer_states[multiplayer.get_remote_sender_id()]
+	state._brush_color = color
 
 # -------------------------------------------------------------------------------------------------
 func enable_constant_pressure(e: bool) -> void:

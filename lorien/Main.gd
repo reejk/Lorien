@@ -11,6 +11,8 @@ extends Control
 @onready var _about_window: Window = $AboutWindow
 @onready var _settings_window: Window = $SettingsWindow
 @onready var _settings_dialog: SettingsDialog = $SettingsWindow/SettingsDialog
+@onready var _multiplayer_window: Window = $MultiplayerWindow
+@onready var _multiplayer_dialog: MultiplayerDialog = $MultiplayerWindow/MultiplayerDialog
 @onready var _brush_color_picker: ColorPalettePicker = $BrushColorPicker
 @onready var _main_menu: MainMenu = $MainMenu
 @onready var _unsaved_changes_window: Window = $UnsavedChangesWindow
@@ -27,6 +29,8 @@ var _ui_visible := true
 var _exit_requested := false
 var _dirty_project_to_close: Project = null
 var _player_enabled := false
+var _touch_events := {}
+var _touch_last_count := 0
 
 # -------------------------------------------------------------------------------------------------
 func _ready() -> void:
@@ -67,7 +71,6 @@ func _ready() -> void:
 	_toolbar.brush_size_changed.connect(_on_brush_size_changed)
 	_toolbar.tool_changed.connect(_on_tool_changed)
 	_toolbar.zen_mode_changed.connect(_on_zen_mode_changed)
-	_toolbar.fullscreen_changed.connect(_on_fullscreen_changed)
 	
 	_menubar.create_new_project.connect(_on_create_new_project)
 	_menubar.project_selected.connect(_on_project_selected)
@@ -77,6 +80,7 @@ func _ready() -> void:
 	_main_menu.save_project.connect(_on_save_project)
 	_main_menu.save_project_as.connect(_on_save_project_as)
 	_main_menu.open_settings_dialog.connect(_on_open_settings_dialog)
+	_main_menu.open_multiplayer_dialog.connect(_on_open_multiplayer_dialog)
 	_main_menu.open_url.connect(_on_open_url)
 	_main_menu.open_about_dialog.connect(_on_open_about_dialog)
 	_main_menu.export_svg.connect(_export_svg)
@@ -92,6 +96,10 @@ func _ready() -> void:
 	_settings_dialog.grid_pattern_changed.connect(_on_grid_pattern_changed)
 	_settings_dialog.canvas_color_changed.connect(_on_canvas_color_changed)
 	_settings_dialog.constant_pressure_changed.connect(_on_constant_pressure_changed)
+	
+	_multiplayer_dialog.connect_to.connect(_on_connect_to_server)
+	_multiplayer_dialog.listen.connect(_on_bind_server)
+	multiplayer.server_disconnected.connect(_on_server_disconnected)
 	
 	# Initialize scale
 	_on_scale_changed()
@@ -146,6 +154,41 @@ func _process(delta: float) -> void:
 	var active_project: Project = ProjectManager.get_active_project()
 	if active_project != null:
 		_menubar.update_tab_title(active_project)
+
+# -------------------------------------------------------------------------------------------------
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if not event.pressed:
+			if event.index in _touch_events:
+				var tween: Tween = _touch_events[event.index]
+				tween.kill()
+			
+				_touch_last_count = max(_touch_last_count, _touch_events.size())
+				_touch_events.erase(event.index)
+			
+				if _touch_events.is_empty():
+					_on_touch_end(_touch_last_count)
+		else:
+			var tween := create_tween()
+			tween.tween_callback(_on_touch_long.bind(event.index)).set_delay(0.25)
+			tween.play()
+			
+			_touch_events[event.index] = tween
+			_touch_last_count = 0
+		
+		get_viewport().set_input_as_handled()
+
+func _on_touch_long(index: int) -> void:
+	_touch_events.erase(index)
+
+func _on_touch_end(count: int) -> void:
+	if count == 2:
+		_on_undo_action()
+	elif count == 3:
+		_on_redo_action()
+	elif count == 4:
+		_toggle_zen_mode()
+	
 
 # -------------------------------------------------------------------------------------------------
 func _unhandled_input(event: InputEvent) -> void:
@@ -240,10 +283,6 @@ func _apply_state() -> void:
 
 # -------------------------------------------------------------------------------------------------
 func _on_quit() -> void:
-	if !_ui_visible:
-		_toggle_zen_mode()
-		return
-	
 	if ProjectManager.has_unsaved_changes():
 		_exit_requested = true
 		_unsaved_changes_window.popup_centered()
@@ -283,6 +322,7 @@ func _is_mouse_on_ui() -> bool:
 	on_ui = on_ui || Utils.is_mouse_on_window(_file_dialog)
 	on_ui = on_ui || Utils.is_mouse_on_window(_about_window)
 	on_ui = on_ui || Utils.is_mouse_on_window(_settings_window)
+	on_ui = on_ui || Utils.is_mouse_on_window(_multiplayer_window)
 	on_ui = on_ui || Utils.is_mouse_in_control(_brush_color_picker)
 	on_ui = on_ui || Utils.is_mouse_on_window(_new_palette_window)
 	on_ui = on_ui || Utils.is_mouse_on_window(_edit_palette_window)
@@ -294,7 +334,8 @@ func is_dialog_open() -> bool:
 	return _about_window.visible || _settings_window.visible || \
 			_new_palette_window.visible || _edit_palette_window.visible || \
 			_delete_palette_window.visible || _file_dialog.visible || \
-			_unsaved_changes_window.visible || AlertDialog.visible
+			_unsaved_changes_window.visible || AlertDialog.visible || \
+			_multiplayer_window.visible
 
 # -------------------------------------------------------------------------------------------------
 func _create_active_default_project() -> void:
@@ -351,10 +392,8 @@ func _toggle_fullscreen() -> void:
 	match get_window().mode:
 		Window.MODE_EXCLUSIVE_FULLSCREEN, Window.MODE_FULLSCREEN:
 			get_window().mode = Window.MODE_WINDOWED
-			_toolbar.set_fullscreen_state(false)
 		_:
 			get_window().mode = Window.MODE_FULLSCREEN
-			_toolbar.set_fullscreen_state(true)
 
 # -------------------------------------------------------------------------------------------------
 func _on_brush_color_changed(brush_color: Color) -> void:
@@ -448,15 +487,11 @@ func _on_canvas_background_changed(color: Color) -> void:
 
 # -------------------------------------------------------------------------------------------------
 func _on_undo_action() -> void:
-	var project: Project = ProjectManager.get_active_project()
-	if project.undo_redo.has_undo():
-		project.undo_redo.undo()
+	_canvas.undo()
 		
 # -------------------------------------------------------------------------------------------------
 func _on_redo_action() -> void:
-	var project: Project = ProjectManager.get_active_project()
-	if project.undo_redo.has_redo():
-		project.undo_redo.redo() 
+	_canvas.redo()
 
 # -------------------------------------------------------------------------------------------------
 func _on_tool_changed(tool_type: int) -> void:
@@ -465,10 +500,6 @@ func _on_tool_changed(tool_type: int) -> void:
 # -------------------------------------------------------------------------------------------------
 func _on_zen_mode_changed(zen_mode: bool) -> void:
 	_toggle_zen_mode()
-
-# -------------------------------------------------------------------------------------------------
-func _on_fullscreen_changed(fullscreen: bool) -> void:
-	_toggle_fullscreen()
 
 # -------------------------------------------------------------------------------------------------
 func _on_save_unsaved_changes() -> void:
@@ -499,6 +530,10 @@ func _on_open_about_dialog() -> void:
 # -------------------------------------------------------------------------------------------------
 func _on_open_settings_dialog() -> void:
 	_settings_window.popup()
+
+# -------------------------------------------------------------------------------------------------
+func _on_open_multiplayer_dialog() -> void:
+	_multiplayer_window.popup()
 
 # -------------------------------------------------------------------------------------------------
 func _on_open_url(url: String) -> void:
@@ -588,7 +623,35 @@ func _on_scale_changed() -> void:
 # --------------------------------------------------------------------------------------------------
 func _on_constant_pressure_changed(enable: bool) -> void:
 	_canvas.enable_constant_pressure(enable)
-		
+
+# --------------------------------------------------------------------------------------------------
+func _on_connect_to_server(address: String, port: int) -> void:
+	var peer = ENetMultiplayerPeer.new()
+	var error = peer.create_client(address, port)
+	_multiplayer_dialog.set_connect_error(error)
+	
+	if error:
+		return
+	
+	multiplayer.multiplayer_peer = peer
+	_multiplayer_window.hide()
+
+# -------------------------------------------------------------------------------------------------
+func _on_server_disconnected() -> void:
+	multiplayer.multiplayer_peer = null
+
+# --------------------------------------------------------------------------------------------------
+func _on_bind_server(port: int, max_clients: int) -> void:
+	var peer = ENetMultiplayerPeer.new()
+	var error = peer.create_server(port, max_clients)
+	_multiplayer_dialog.set_listen_error(error)
+	
+	if error:
+		return
+	
+	multiplayer.multiplayer_peer = peer
+	_multiplayer_window.hide()
+
 # --------------------------------------------------------------------------------------------------
 func _get_platform_ui_scale() -> float:
 	var platform: String = OS.get_name()
