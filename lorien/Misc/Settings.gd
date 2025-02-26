@@ -14,6 +14,9 @@ const GENERAL_LANGUAGE					:= "general_language"
 const GENERAL_TOOL_PRESSURE				:= "general_tool_pressure"
 const GENERAL_TABLET_DRIVER 			:= "general_tablet_driver"
 const COLOR_PALETTE_UUID_LAST_USED		:= "general_color_palette_uuid_last_used" # TODO: move this to state.cfg
+const GENERAL_TRANSPARENT_WINDOW		:= "general_transparent_window"
+const GENERAL_ALWAYS_ON_TOP 			:= "general_always_on_top"
+const GENERAL_MOUSE_PASSTHROUGH			:= "general_mouse_passthrough"
 
 # -------------------------------------------------------------------------------------------------
 const APPEARANCE_THEME 					:= "appearance_theme"

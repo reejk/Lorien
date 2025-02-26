@@ -210,6 +210,55 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="HSeparator5" type="HSeparator" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="TransparentWindow" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer/TransparentWindow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+text = "SETTINGS_TRANSPARENT_WINDOW"
+
+[node name="TransparentWindow" type="CheckBox" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer/TransparentWindow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AlwaysOnTop" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer/AlwaysOnTop"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+text = "SETTINGS_ALWAYS_ON_TOP"
+
+[node name="AlwaysOnTop" type="CheckBox" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer/AlwaysOnTop"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MousePassthrough2" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer/MousePassthrough2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+text = "SETTINGS_MOUSE_PASSTHROUGH"
+
+[node name="MousePassthrough" type="CheckBox" parent="VBoxContainer/MarginContainer/VBoxContainer/GeneralContainer/VBoxContainer/MousePassthrough2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="AppearanceContainer" type="ScrollContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 visible = false

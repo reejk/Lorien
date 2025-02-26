@@ -192,8 +192,13 @@ func use_tool(tool_type: int) -> void:
 # -------------------------------------------------------------------------------------------------
 func set_background_color(color: Color) -> void:
 	_background_color = color
-	RenderingServer.set_default_clear_color(_background_color)
 	_grid.set_canvas_color(_background_color)
+	_viewport.transparent_bg = color == Color.TRANSPARENT
+	
+	if _viewport.transparent_bg:
+		RenderingServer.set_default_clear_color(Color(0, 0, 0, 0))
+	else:
+		RenderingServer.set_default_clear_color(_background_color)
 
 # -------------------------------------------------------------------------------------------------
 func enable_player(e: bool) -> void:

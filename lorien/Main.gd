@@ -26,6 +26,8 @@ extends Control
 
 var _last_input_time := 0
 var _ui_visible := true 
+var _always_on_top := false
+var _mouse_passthrough := false
 var _exit_requested := false
 var _dirty_project_to_close: Project = null
 var _player_enabled := false
@@ -96,6 +98,13 @@ func _ready() -> void:
 	_settings_dialog.grid_pattern_changed.connect(_on_grid_pattern_changed)
 	_settings_dialog.canvas_color_changed.connect(_on_canvas_color_changed)
 	_settings_dialog.constant_pressure_changed.connect(_on_constant_pressure_changed)
+	_settings_dialog.transparent_window_changed.connect(_on_transparent_window_changed)
+	_settings_dialog.always_on_top_changed.connect(_on_always_on_top_changed)
+	_settings_dialog.mouse_passthrough_changed.connect(_on_mouse_passthrough_changed)
+	
+	_on_transparent_window_changed(Settings.get_value(Settings.GENERAL_TRANSPARENT_WINDOW, false))
+	_on_always_on_top_changed(Settings.get_value(Settings.GENERAL_ALWAYS_ON_TOP, false))
+	_on_mouse_passthrough_changed(Settings.get_value(Settings.GENERAL_MOUSE_PASSTHROUGH, false))
 	
 	_multiplayer_dialog.connect_to.connect(_on_connect_to_server)
 	_multiplayer_dialog.listen.connect(_on_bind_server)
@@ -298,6 +307,11 @@ func _toggle_zen_mode() -> void:
 	_statusbar.visible = _ui_visible
 	_toolbar.visible = _ui_visible
 	_toolbar.set_zen_mode_state(!_ui_visible)
+	
+	if _always_on_top:
+		get_window().always_on_top = !_ui_visible
+	if _mouse_passthrough:
+		get_window().mouse_passthrough = !_ui_visible
 
 # -------------------------------------------------------------------------------------------------
 func _on_files_dropped(files: PackedStringArray) -> void:
@@ -623,6 +637,26 @@ func _on_scale_changed() -> void:
 # --------------------------------------------------------------------------------------------------
 func _on_constant_pressure_changed(enable: bool) -> void:
 	_canvas.enable_constant_pressure(enable)
+
+# --------------------------------------------------------------------------------------------------
+func _on_transparent_window_changed(enable: bool) -> void:
+	get_window().transparent = enable
+	get_window().transparent_bg = enable
+	
+	if enable:
+		_canvas.set_background_color(Color.TRANSPARENT)
+	
+# --------------------------------------------------------------------------------------------------
+func _on_always_on_top_changed(enable: bool) -> void:
+	_always_on_top = enable
+	if !_ui_visible:
+		get_window().always_on_top = enable
+	
+# --------------------------------------------------------------------------------------------------
+func _on_mouse_passthrough_changed(enable: bool) -> void:
+	_mouse_passthrough = enable
+	if !_ui_visible:
+		get_window().mouse_passthrough = enable
 
 # --------------------------------------------------------------------------------------------------
 func _on_connect_to_server(address: String, port: int) -> void:

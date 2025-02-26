@@ -24,6 +24,9 @@ signal canvas_color_changed(color: Color)
 signal grid_size_changed(size: int)
 signal grid_pattern_changed(pattern: Types.GridPattern)
 signal constant_pressure_changed(state: bool)
+signal transparent_window_changed(state: bool)
+signal always_on_top_changed(state: bool)
+signal mouse_passthrough_changed(state: bool)
 
 # -------------------------------------------------------------------------------------------------
 @onready var _general_tab: Button = %GeneralTab
@@ -49,6 +52,9 @@ signal constant_pressure_changed(state: bool)
 @onready var _ui_scale: SpinBox = %UIScale
 @onready var _grid_size: SpinBox = %GridSize
 @onready var _grid_pattern: OptionButton = %GridPattern
+@onready var _transparent_window: CheckBox = %TransparentWindow
+@onready var _always_on_top: CheckBox = %AlwaysOnTop
+@onready var _mouse_passthrough: CheckBox = %MousePassthrough
 @onready var _foreground_fps: SpinBox = %ForgroundFramerate
 @onready var _background_fps: SpinBox = %BackgroundFramerate
 @onready var _brush_rounding: OptionButton = %BrushRounding
@@ -69,6 +75,9 @@ func _ready() -> void:
 	_project_dir.text_changed.connect(_on_default_project_dir_changed)
 	_language.item_selected.connect(_on_language_selected)
 	_tablet_driver.item_selected.connect(_on_tablet_driver_selected)
+	_transparent_window.toggled.connect(_on_transparent_window_toggled)
+	_always_on_top.toggled.connect(_on_always_on_top_toggled)
+	_mouse_passthrough.toggled.connect(_on_mouse_passthrough_toggled)
 	_theme.item_selected.connect(_on_theme_selected)
 	_ui_scale_mode.item_selected.connect(_on_ui_scale_mode_selected)
 	_ui_scale.value_changed.connect(_on_ui_scale_changed)
@@ -94,6 +103,9 @@ func _set_values() -> void:
 	var pressure_sensitivity: float = Settings.get_value(Settings.GENERAL_PRESSURE_SENSITIVITY, Config.DEFAULT_PRESSURE_SENSITIVITY)
 	var constant_pressure: bool = Settings.get_value(Settings.GENERAL_CONSTANT_PRESSURE, Config.DEFAULT_CONSTANT_PRESSURE)
 	var stabilizer_strength: float = Settings.get_value(Settings.GENERAL_STABILIZER_STRENGTH, Config.DEFAULT_STABILIZER_STRENGTH)
+	var transparent_window: bool = Settings.get_value(Settings.GENERAL_TRANSPARENT_WINDOW, false)
+	var always_on_top: bool = Settings.get_value(Settings.GENERAL_ALWAYS_ON_TOP, false)
+	var mouse_passthrough: bool = Settings.get_value(Settings.GENERAL_MOUSE_PASSTHROUGH, false)
 	
 	var canvas_color: Color = Settings.get_value(Settings.APPEARANCE_CANVAS_COLOR, Config.DEFAULT_CANVAS_COLOR)
 	var ui_theme: Types.UITheme = Settings.get_value(Settings.APPEARANCE_THEME, Types.UITheme.DARK)
@@ -137,6 +149,9 @@ func _set_values() -> void:
 	_foreground_fps.value = foreground_fps
 	_background_fps.value = background_fps
 	_ui_scale.value = ui_scale
+	_transparent_window.button_pressed = transparent_window
+	_always_on_top.button_pressed = always_on_top
+	_mouse_passthrough.button_pressed = mouse_passthrough
 	
 # -------------------------------------------------------------------------------------------------
 func _set_rounding() -> void:
@@ -332,3 +347,21 @@ func _on_action_keybinding_changed(action: KeybindingsManager.Action, event: Inp
 	KeybindingsManager.rebind_action(action, event)
 	Settings.set_keybinding(action.name, action.event)
 	GlobalSignals.keybinding_changed.emit(action)
+
+# -------------------------------------------------------------------------------------------------
+func _on_transparent_window_toggled(button_pressed: bool) -> void:
+	Settings.set_value(Settings.GENERAL_TRANSPARENT_WINDOW, button_pressed)
+	transparent_window_changed.emit(button_pressed)
+	
+	if not button_pressed:
+		canvas_color_changed.emit(_canvas_color.color)
+
+# -------------------------------------------------------------------------------------------------
+func _on_always_on_top_toggled(button_pressed: bool) -> void:
+	Settings.set_value(Settings.GENERAL_ALWAYS_ON_TOP, button_pressed)
+	always_on_top_changed.emit(button_pressed)
+
+# -------------------------------------------------------------------------------------------------
+func _on_mouse_passthrough_toggled(button_pressed: bool) -> void:
+	Settings.set_value(Settings.GENERAL_MOUSE_PASSTHROUGH, button_pressed)
+	mouse_passthrough_changed.emit(button_pressed)

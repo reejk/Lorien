@@ -55,6 +55,7 @@ window/size/window_width_override=1440
 window/size/window_height_override=810
 window/subwindows/embed_subwindows=false
 window/stretch/aspect="expand"
+window/per_pixel_transparency/allowed=true
 window/vsync/vsync_mode=false
 
 [editor]
