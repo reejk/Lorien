@@ -36,6 +36,7 @@ const MULTIPLAYER_CONNECT_TO_ADDRESS	:= "multiplayer_connect_to_address"
 const MULTIPLAYER_CONNECT_TO_PORT		:= "multiplayer_connect_to_port"
 const MULTIPLAYER_LISTEN_PORT			:= "multiplayer_listen_port"
 const MULTIPLAYER_MAXIMUM_CLIENTS		:= "multiplayer_maximum_clients"
+const MULTIPLAYER_LAST_STATE			:= "multiplayer_last_state"
 
 # -------------------------------------------------------------------------------------------------
 var _config_file := ConfigFile.new()

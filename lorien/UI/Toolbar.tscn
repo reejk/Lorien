@@ -218,6 +218,28 @@ value = 5.0
 layout_mode = 2
 text = "12"
 
+[node name="Center" type="HBoxContainer" parent="Console"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="MultiplayerListenButton" type="Button" parent="Console/Center"]
+visible = false
+layout_mode = 2
+text = "MULTIPLAYER_LISTEN"
+
+[node name="MultiplayerConnectButton" type="Button" parent="Console/Center"]
+visible = false
+layout_mode = 2
+text = "MULTIPLAYER_CONNECT"
+
+[node name="MultiplayerStopButton" type="Button" parent="Console/Center"]
+visible = false
+layout_mode = 2
+text = "MULTIPLAYER_STOP"
+
 [node name="Right" type="HBoxContainer" parent="Console"]
 layout_mode = 2
 size_flags_horizontal = 3

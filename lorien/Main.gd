@@ -108,6 +108,9 @@ func _ready() -> void:
 	
 	_multiplayer_dialog.connect_to.connect(_on_connect_to_server)
 	_multiplayer_dialog.listen.connect(_on_bind_server)
+	_toolbar.multiplayer_connect.connect(_on_multiplayer_connect)
+	_toolbar.multiplayer_listen.connect(_on_multiplayer_listen)
+	_toolbar.multiplayer_stop.connect(_on_multiplayer_stop)
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
 	
 	# Initialize scale
@@ -691,10 +694,14 @@ func _on_connect_to_server(address: String, port: int) -> void:
 	
 	multiplayer.multiplayer_peer = peer
 	_multiplayer_window.hide()
+	_toolbar.set_multiplayer_state(true)
+	
+	Settings.set_value(Settings.MULTIPLAYER_LAST_STATE, "connect")
 
 # -------------------------------------------------------------------------------------------------
 func _on_server_disconnected() -> void:
-	multiplayer.multiplayer_peer = null
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_toolbar.set_multiplayer_state(false)
 
 # --------------------------------------------------------------------------------------------------
 func _on_bind_server(port: int, max_clients: int) -> void:
@@ -707,6 +714,26 @@ func _on_bind_server(port: int, max_clients: int) -> void:
 	
 	multiplayer.multiplayer_peer = peer
 	_multiplayer_window.hide()
+	_toolbar.set_multiplayer_state(true)
+	
+	Settings.set_value(Settings.MULTIPLAYER_LAST_STATE, "listen")
+
+# -------------------------------------------------------------------------------------------------
+func _on_multiplayer_connect() -> void:
+	var address:String = Settings.get_value(Settings.MULTIPLAYER_CONNECT_TO_ADDRESS)
+	var port:int = Settings.get_value(Settings.MULTIPLAYER_CONNECT_TO_PORT, Config.DEFAULT_MULTIPLAYER_PORT)
+	_on_connect_to_server(address, port)
+	
+# -------------------------------------------------------------------------------------------------
+func _on_multiplayer_listen() -> void:
+	var port:int = Settings.get_value(Settings.MULTIPLAYER_LISTEN_PORT, Config.DEFAULT_MULTIPLAYER_PORT)
+	var max_clients:int = Settings.get_value(Settings.MULTIPLAYER_MAXIMUM_CLIENTS, Config.DEFAULT_MULTIPLAYER_MAXIMUM_CLIENTS)
+	_on_bind_server(port, max_clients)
+	
+# -------------------------------------------------------------------------------------------------
+func _on_multiplayer_stop() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_toolbar.set_multiplayer_state(false)
 
 # --------------------------------------------------------------------------------------------------
 func _get_platform_ui_scale() -> float:

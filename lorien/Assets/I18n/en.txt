@@ -8,6 +8,7 @@ MENU_OPEN           Open...
 MENU_SAVE           Save
 MENU_SAVE_AS        Save as...
 MENU_SETTINGS       Settings
+MENU_MULTIPLAYER    Multiplayer
 MENU_MANUAL         Online Manual
 MENU_BUG_TRACKER    Bug Tracker
 MENU_ABOUT          About
@@ -83,6 +84,9 @@ SETTINGS_BRUSH_CAPS_FLAT        Flat
 SETTINGS_BRUSH_CAPS_ROUND       Round
 SETTINGS_RESTART_NOTICE  		Restart required to apply the new settings
 SETTINGS_TOOL_PRESSURE          Default Tools Pressure
+SETTINGS_TRANSPARENT_WINDOW     Transparent Window
+SETTINGS_ALWAYS_ON_TOP          Always on Top
+SETTINGS_MOUSE_PASSTHROUGH      Mouse Passthrough
 
 # -----------------------------------------------------------------------------
 # About dialog strings
@@ -162,3 +166,14 @@ ACTION_toggle_zen_mode              Toggle Zen Mode
 ACTION_toggle_player                Toggle Easteregg
 ACTION_toggle_fullscreen            Toggle Fullscreen
 ACTION_canvas_pan_key               Pan Key
+
+# -----------------------------------------------------------------------------
+# Multiplayer
+# -----------------------------------------------------------------------------
+MULTIPLAYER_LISTEN                  Listen
+MULTIPLAYER_CONNECT                 Connect
+MULTIPLAYER_STOP                    Stop
+MULTIPLAYER_CONNECT_TO_ADDRESS      Connect to Address
+MULTIPLAYER_CONNECT_TO_PORT         Connect to Port
+MULTIPLAYER_LISTEN_PORT             Server Port
+MULTIPLAYER_SERVER_MAXIMUM_CLIENTS  Maximum Clients

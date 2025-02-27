@@ -11,6 +11,9 @@ signal toggle_brush_color_picker
 signal brush_size_changed(size: float)
 signal tool_changed(t: Types.Tool)
 signal zen_mode_changed(zen_mode : bool)
+signal multiplayer_connect
+signal multiplayer_listen
+signal multiplayer_stop
 
 # -------------------------------------------------------------------------------------------------
 const BUTTON_HOVER_COLOR = Color("50ffd6")
@@ -35,6 +38,9 @@ const BUTTON_NORMAL_COLOR = Color.WHITE
 @onready var _tool_btn_eraser: FlatTextureButton = $Console/Left/EraserToolButton
 @onready var _tool_btn_selection: FlatTextureButton = $Console/Left/SelectionToolButton
 @onready var _ui_btn_zen_mode: FlatTextureButton = $Console/Right/ZenModeButton
+@onready var _mp_btn_connect: Button = $Console/Center/MultiplayerConnectButton
+@onready var _mp_btn_listen: Button = $Console/Center/MultiplayerListenButton
+@onready var _mp_btn_stop: Button = $Console/Center/MultiplayerStopButton
 
 var _last_active_tool_button: FlatTextureButton
 
@@ -68,6 +74,11 @@ func _ready() -> void:
 	_tool_btn_eraser.pressed.connect(_on_eraser_tool_pressed)
 	_tool_btn_selection.pressed.connect(_on_select_tool_pressed)
 	_ui_btn_zen_mode.pressed.connect(_on_zen_mode_pressed)
+	_mp_btn_connect.pressed.connect(_on_multiplayer_connect)
+	_mp_btn_listen.pressed.connect(_on_multiplayer_listen)
+	_mp_btn_stop.pressed.connect(_on_multiplayer_stop)
+	
+	set_multiplayer_state(false)
 	
 # -------------------------------------------------------------------------------------------------
 func enable_tool(tool_type: Types.Tool) -> void:
@@ -215,3 +226,21 @@ func _update_undo_redo_buttons() -> void:
 	
 	_undo_button.set_is_disabled(!active_project.undo_redo.has_undo())
 	_redo_button.set_is_disabled(!active_project.undo_redo.has_redo())
+
+# -------------------------------------------------------------------------------------------------
+func set_multiplayer_state(connected: bool) -> void:
+	_mp_btn_listen.visible = !connected and Settings.get_value(Settings.MULTIPLAYER_LAST_STATE, "") == "listen"
+	_mp_btn_connect.visible = !connected and Settings.get_value(Settings.MULTIPLAYER_LAST_STATE, "") == "connect"
+	_mp_btn_stop.visible = connected
+
+# -------------------------------------------------------------------------------------------------
+func _on_multiplayer_connect() -> void:
+	multiplayer_connect.emit() 
+	
+# -------------------------------------------------------------------------------------------------
+func _on_multiplayer_listen() -> void:
+	multiplayer_listen.emit() 
+	
+# -------------------------------------------------------------------------------------------------
+func _on_multiplayer_stop() -> void:
+	multiplayer_stop.emit() 
