@@ -218,7 +218,7 @@ func _clear_and_set_background_image(image: Image) -> void:
 	for child: Node in _images_parent.get_children():
 		child.queue_free()
 	
-	var image_node = TextureRect.new()
+	var image_node := TextureRect.new()
 	image_node.texture = ImageTexture.create_from_image(image)
 	_images_parent.add_child(image_node)
 	

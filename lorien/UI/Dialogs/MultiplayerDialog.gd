@@ -35,12 +35,12 @@ func _ready() -> void:
 	_maximum_clients.value = Settings.get_value(Settings.MULTIPLAYER_MAXIMUM_CLIENTS, Config.DEFAULT_MULTIPLAYER_MAXIMUM_CLIENTS)
 
 # -------------------------------------------------------------------------------------------------
-func set_connect_error(error: Error):
+func set_connect_error(error: Error) -> void:
 	_connect_error.text = str(error)
 	_connect_error.visible = true if error else false
 
 # -------------------------------------------------------------------------------------------------
-func set_listen_error(error: Error):
+func set_listen_error(error: Error) -> void:
 	_listen_error.text = str(error)
 	_listen_error.visible = true if error else false
 

@@ -20,10 +20,10 @@ var _current_zoom_level := 1.0
 var _start_mouse_pos := Vector2(0.0, 0.0)
 
 # -------------------------------------------------------------------------------------------------
-var _touch_events = {}
+var _touch_events := {}
 var _touch_last_drag_distance := 0.0
 var _touch_last_drag_median := Vector2.ZERO
-var _multidrag_valid = false
+var _multidrag_valid := false
 
 # -------------------------------------------------------------------------------------------------
 func set_zoom_level(zoom_level: float) -> void:
@@ -42,7 +42,7 @@ func do_center(screen_space_center_point: Vector2) -> void:
 	_do_pan(delta)
 	
 	
-func touch_event(event):
+func touch_event(event: InputEvent) -> void:
 	# Keep track of the fingers on the screen
 	if event is InputEventScreenTouch:
 		if event.pressed:
@@ -59,12 +59,9 @@ func touch_event(event):
 		if _touch_events.size() == 1:
 			_do_pan(event.relative)
 		if _touch_events.size() == 2:
-			var events = []
-			for key in _touch_events.keys():
-				events.append(_touch_events.get(key))
-
-			var median_point = Vector2.ZERO
-			for e in events:
+			var events := _touch_events.values()
+			var median_point := Vector2.ZERO
+			for e:InputEvent in events:
 				median_point += e.position
 			median_point /= events.size()
 			if _multidrag_valid:
@@ -73,15 +70,15 @@ func touch_event(event):
 			median_point = get_canvas_transform().affine_inverse() * median_point
 			median_point = get_global_transform().affine_inverse() * median_point
 
-			var drag_distance = events[0].position.distance_to(events[1].position)
-			var delta = (drag_distance - _touch_last_drag_distance) * _current_zoom_level / 800
+			var drag_distance:float = events[0].position.distance_to(events[1].position)
+			var delta:float = (drag_distance - _touch_last_drag_distance) * _current_zoom_level / 800
 			if _multidrag_valid:
 				_zoom_canvas(_current_zoom_level + delta, median_point)
 			_touch_last_drag_distance = drag_distance
 			_multidrag_valid = true
 		get_viewport().set_input_as_handled()
 
-func _input(event):
+func _input(event: InputEvent) -> void:
 	touch_event(event)
 
 # -------------------------------------------------------------------------------------------------
