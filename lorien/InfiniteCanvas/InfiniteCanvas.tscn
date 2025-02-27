@@ -68,6 +68,12 @@ script = ExtResource("2")
 script = ExtResource("12")
 camera_path = NodePath("../Camera2D")
 
+[node name="Images" type="Node2D" parent="SubViewport"]
+
+[node name="TextureRect" type="TextureRect" parent="SubViewport/Images"]
+offset_right = 40.0
+offset_bottom = 40.0
+
 [node name="Strokes" type="Node2D" parent="SubViewport"]
 
 [node name="DebugDraw" type="Node2D" parent="SubViewport"]

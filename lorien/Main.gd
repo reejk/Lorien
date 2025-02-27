@@ -184,8 +184,6 @@ func _input(event: InputEvent) -> void:
 			
 			_touch_events[event.index] = tween
 			_touch_last_count = 0
-		
-		get_viewport().set_input_as_handled()
 
 func _on_touch_long(index: int) -> void:
 	_touch_events.erase(index)
@@ -243,6 +241,30 @@ func _unhandled_input(event: InputEvent) -> void:
 				_toggle_zen_mode()
 			elif Utils.is_action_pressed("toggle_fullscreen", event):
 				_toggle_fullscreen()
+			elif Utils.is_action_pressed("shortcut_screen_to_background", event):
+				_on_set_screen_to_background()
+
+# -------------------------------------------------------------------------------------------------
+func _on_set_screen_to_background() -> void:
+	var window := get_window()
+	var screen_id := DisplayServer.window_get_current_screen(window.get_window_id())
+	
+	window.set_meta("screen_id", screen_id)
+	window.set_meta("restore_mode", window.mode)
+
+	window.mode = Window.MODE_MINIMIZED
+	
+	var tween := create_tween()
+	tween.tween_callback(_set_screen_to_background_image).set_delay(0.35)
+	tween.play()
+	
+func _set_screen_to_background_image() -> void:
+	var window := get_window()
+	var screen_id:int = window.get_meta("screen_id")
+	var screen := DisplayServer.screen_get_image(screen_id)
+	_canvas.set_background_image(screen)
+	
+	window.mode = window.get_meta("restore_mode")
 
 # -------------------------------------------------------------------------------------------------
 func _toggle_player() -> void:
@@ -660,8 +682,8 @@ func _on_mouse_passthrough_changed(enable: bool) -> void:
 
 # --------------------------------------------------------------------------------------------------
 func _on_connect_to_server(address: String, port: int) -> void:
-	var peer = ENetMultiplayerPeer.new()
-	var error = peer.create_client(address, port)
+	var peer := ENetMultiplayerPeer.new()
+	var error := peer.create_client(address, port)
 	_multiplayer_dialog.set_connect_error(error)
 	
 	if error:
@@ -676,8 +698,8 @@ func _on_server_disconnected() -> void:
 
 # --------------------------------------------------------------------------------------------------
 func _on_bind_server(port: int, max_clients: int) -> void:
-	var peer = ENetMultiplayerPeer.new()
-	var error = peer.create_server(port, max_clients)
+	var peer := ENetMultiplayerPeer.new()
+	var error := peer.create_server(port, max_clients)
 	_multiplayer_dialog.set_listen_error(error)
 	
 	if error:

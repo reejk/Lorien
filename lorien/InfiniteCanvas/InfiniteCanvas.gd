@@ -18,6 +18,7 @@ const PLAYER = preload("res://Misc/Player/Player.tscn")
 @onready var _camera: Camera2D = $SubViewport/Camera2D
 @onready var _viewport: SubViewport = $SubViewport
 @onready var _grid: InfiniteCanvasGrid = $SubViewport/Grid
+@onready var _images_parent: Node2D = $SubViewport/Images
 
 @onready var _constant_pressure_curve := load("res://InfiniteCanvas/constant_pressure_curve.tres")
 @onready var _default_pressure_curve := load("res://InfiniteCanvas/default_pressure_curve.tres")
@@ -87,10 +88,10 @@ func _on_player_disconnected(id: int) -> void:
 
 # -------------------------------------------------------------------------------------------------
 @rpc("any_peer", "call_remote", "reliable")
-func _known_peers(self_id, peers: Array) -> void:
+func _known_peers(self_id: int, peers: Array) -> void:
 	_peer_states[self_id] = _my_state
 	
-	for id in peers:
+	for id:int in peers:
 		if id not in _peer_states:
 			_peer_states[id] = InfiniteCanvasPeerState.create()
 
@@ -200,6 +201,27 @@ func set_background_color(color: Color) -> void:
 	else:
 		RenderingServer.set_default_clear_color(_background_color)
 
+# -------------------------------------------------------------------------------------------------
+func set_background_image(image: Image) -> void:
+	_clear_and_set_background_image(image)
+	
+	if multiplayer.multiplayer_peer:
+		_set_background_image.rpc(image.get_width(), image.get_height(), image.get_format(), image.save_webp_to_buffer())
+
+@rpc("any_peer", "call_remote", "reliable")
+func _set_background_image(width: int, height: int, format: int, image_data: PackedByteArray) -> void:
+	var image := Image.create_empty(width, height, true, format)
+	image.load_webp_from_buffer(image_data)
+	_clear_and_set_background_image(image)
+	
+func _clear_and_set_background_image(image: Image) -> void:
+	for child: Node in _images_parent.get_children():
+		child.queue_free()
+	
+	var image_node = TextureRect.new()
+	image_node.texture = ImageTexture.create_from_image(image)
+	_images_parent.add_child(image_node)
+	
 # -------------------------------------------------------------------------------------------------
 func enable_player(e: bool) -> void:
 	_player_enabled = e
