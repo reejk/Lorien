@@ -388,14 +388,36 @@ func _end_state_stroke(state: InfiniteCanvasPeerState) -> void:
 	state._current_stroke = null
 
 # -------------------------------------------------------------------------------------------------
-func add_strokes(strokes: Array) -> void:
-	_add_strokes.rpc(strokes)
+func add_strokes(strokes: Array[BrushStroke]) -> void:
+	var data := []
+	for stroke in strokes:
+		data.append({
+			'global_position': stroke.global_position,
+			'color': stroke.color,
+			'size': stroke.size,
+			'points': stroke.points,
+			'pressures': stroke.pressures
+		})
+	_add_strokes_mp.rpc(data)
 
 @rpc("any_peer", "call_local", "reliable")
-func _add_strokes(strokes: Array) -> void:
+func _add_strokes_mp(data: Array) -> void:
+	var strokes: Array[BrushStroke] = []
+	for d: Dictionary in data:
+		var stroke: BrushStroke = BRUSH_STROKE.instantiate()
+		stroke.global_position = d['global_position']
+		stroke.color = d['color']
+		stroke.size = d['size']
+		stroke.points = d['points']
+		stroke.pressures = d['pressures']
+		strokes.append(stroke)
+	
+	_add_strokes(strokes)
+	
+func _add_strokes(strokes: Array[BrushStroke]) -> void:
 	_current_project.undo_redo.create_action("Add Strokes")
 	var point_count := 0
-	for stroke: BrushStroke in strokes:
+	for stroke in strokes:
 		point_count += stroke.points.size()
 		_current_project.undo_redo.add_undo_method(_undo_last_stroke)
 		_current_project.undo_redo.add_undo_reference(stroke)
@@ -488,31 +510,76 @@ func _on_camera_moved(pos: Vector2) -> void:
 	_current_project.dirty = true
 
 # -------------------------------------------------------------------------------------------------
+func move_strokes(strokes: Dictionary) -> void: # BrushStroke -> Vector2
+	var data := {}
+	for stroke: BrushStroke in strokes.keys():
+		var index := _current_project.strokes.find(stroke)
+		data[index] = {
+			'old': strokes[stroke],
+			'new': stroke.global_position
+		}
+	
+	_move_strokes_mp.rpc(data)
+
+@rpc("any_peer", "call_local", "reliable")
+func _move_strokes_mp(data: Dictionary) -> void: # index -> Vector2
+	var strokes := {}
+	for index: int in data.keys():
+		strokes[_current_project.strokes[index]] = data[index]
+	
+	_move_strokes(strokes)
+
+func _move_strokes(strokes: Dictionary) -> void: # BrushStroke -> {old:Vector2, new:Vector2}
+	_current_project.undo_redo.create_action("Move Strokes")
+	for stroke: BrushStroke in strokes.keys():
+		var rec: Dictionary = strokes[stroke]
+		_current_project.undo_redo.add_do_property(stroke, "global_position", rec['new'])
+		_current_project.undo_redo.add_undo_property(stroke, "global_position", rec['old'])
+	_current_project.undo_redo.commit_action()
+	_current_project.dirty = true
+	
+# -------------------------------------------------------------------------------------------------
+func remove_strokes(strokes: Array[BrushStroke]) -> void:
+	var data := []
+	for stroke in strokes:
+		var index := _current_project.strokes.find(stroke)
+		data.append(index)
+		
+	_remove_strokes_mp.rpc(data)
+
+@rpc("any_peer", "call_local", "reliable")
+func _remove_strokes_mp(data: Array) -> void:
+	var strokes: Array[BrushStroke] = []
+	for index: int in data:
+		strokes.append(_current_project.strokes[index])
+	
+	_remove_strokes(strokes)
+	
+func _remove_strokes(strokes: Array[BrushStroke]) -> void:
+	_current_project.undo_redo.create_action("Remove Strokes")
+	var point_count := 0
+	for stroke in strokes:
+		point_count += stroke.points.size()
+		_current_project.undo_redo.add_undo_method(_undo_delete_stroke.bind(strokes))
+		_current_project.undo_redo.add_do_method(_current_project.remove_stroke.bind(stroke))
+		_current_project.undo_redo.add_do_method(_strokes_parent.remove_child.bind(stroke))
+	_current_project.undo_redo.add_do_property(info, "stroke_count", info.stroke_count - strokes.size())
+	_current_project.undo_redo.add_do_property(info, "point_count", info.point_count - point_count)
+	_current_project.undo_redo.commit_action()
+	
+# -------------------------------------------------------------------------------------------------
 func _delete_selected_strokes() -> void:
 	var strokes := _selection_tool.get_selected_strokes()
 	if !strokes.is_empty():
-		_current_project.undo_redo.create_action("Delete Selection")
-		for stroke: BrushStroke in strokes:
-			_current_project.undo_redo.add_do_method(_do_delete_stroke.bind(stroke))
-			_current_project.undo_redo.add_undo_reference(stroke)
-			_current_project.undo_redo.add_undo_method(_undo_delete_stroke.bind(stroke))
 		_selection_tool.deselect_all_strokes()
-		_current_project.undo_redo.commit_action()
-		_current_project.dirty = true
-
-# -------------------------------------------------------------------------------------------------
-func _do_delete_stroke(stroke: BrushStroke) -> void:
-	var index := _current_project.strokes.find(stroke)
-	_current_project.strokes.remove_at(index)
-	_strokes_parent.remove_child(stroke)
-	info.point_count -= stroke.points.size()
-	info.stroke_count -= 1
+		remove_strokes(strokes)
 
 # FIXME: this adds strokes at the back and does not preserve stroke order; not sure how to do that except saving before
 # and after versions of the stroke arrays which is a nogo.
 # -------------------------------------------------------------------------------------------------
-func _undo_delete_stroke(stroke: BrushStroke) -> void:
-	_current_project.strokes.append(stroke)
-	_strokes_parent.add_child(stroke)
-	info.point_count += stroke.points.size()
-	info.stroke_count += 1
+func _undo_delete_stroke(strokes: Array[BrushStroke]) -> void:
+	for stroke in strokes:
+		_current_project.strokes.append(stroke)
+		_strokes_parent.add_child(stroke)
+		info.point_count += stroke.points.size()
+		info.stroke_count += 1

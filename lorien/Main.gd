@@ -378,6 +378,10 @@ func is_dialog_open() -> bool:
 
 # -------------------------------------------------------------------------------------------------
 func _create_active_default_project() -> void:
+	__create_active_default_project.rpc()
+
+@rpc("any_peer", "call_local", "reliable")
+func __create_active_default_project() -> void:
 	var default_project: Project = ProjectManager.add_project()
 	_make_project_active(default_project)
 
@@ -394,6 +398,10 @@ func _on_create_new_project() -> void:
 
 # -------------------------------------------------------------------------------------------------
 func _on_project_selected(project_id: int) -> void:
+	__on_project_selected.rpc(project_id)
+
+@rpc("any_peer", "call_local", "reliable")
+func __on_project_selected(project_id: int) -> void:
 	var project: Project = ProjectManager.get_project_by_id(project_id)
 	_make_project_active(project)
 
@@ -409,6 +417,10 @@ func _on_project_closed(project_id: int) -> void:
 
 # -------------------------------------------------------------------------------------------------
 func _close_project(project_id: int) -> void:
+	__close_project.rpc(project_id)
+
+@rpc("any_peer", "call_local", "reliable")	
+func __close_project(project_id: int) -> void:
 	var active_project: Project = ProjectManager.get_active_project()
 	var project: Project = ProjectManager.get_project_by_id(project_id)
 	var active_project_closed := active_project.id == project.id

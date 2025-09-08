@@ -40,6 +40,11 @@ func add_stroke(stroke: BrushStroke) -> void:
 	strokes.append(stroke)
 	dirty = true
 
+func remove_stroke(stroke: BrushStroke) -> void:
+	var index := strokes.find(stroke)
+	strokes.remove_at(index)
+	dirty = true
+
 # -------------------------------------------------------------------------------------------------
 func remove_last_stroke() -> void:
 	if !strokes.is_empty():

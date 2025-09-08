@@ -147,7 +147,7 @@ func _paste_strokes(strokes: Array) -> void:
 	var offset := _cursor.global_position - (top_left + (bottom_right - top_left) / 2.0)
 	
 	# Duplicate the strokes 
-	var duplicates := []
+	var duplicates: Array[BrushStroke] = []
 	for stroke: BrushStroke in strokes:
 		var dup := _duplicate_stroke(stroke, offset)
 		dup.add_to_group(GROUP_SELECTED_STROKES)
@@ -190,13 +190,7 @@ func _set_stroke_selected(stroke: BrushStroke) -> void:
 			
 # ------------------------------------------------------------------------------------------------
 func _add_undoredo_action_for_moved_strokes() -> void:
-	var project: Project = ProjectManager.get_active_project()
-	project.undo_redo.create_action("Move Strokes")
-	for stroke: BrushStroke in _stroke_positions_before_move.keys():
-		project.undo_redo.add_do_property(stroke, "global_position", stroke.global_position)
-		project.undo_redo.add_undo_property(stroke, "global_position", _stroke_positions_before_move[stroke])
-	project.undo_redo.commit_action()
-	project.dirty = true
+	_canvas.move_strokes(_stroke_positions_before_move)
 
 # -------------------------------------------------------------------------------------------------
 func _offset_selected_strokes(offset: Vector2) -> void:

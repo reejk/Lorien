@@ -60,15 +60,9 @@ func _remove_stroke(brush_position: Vector2) -> void:
 		
 # ------------------------------------------------------------------------------------------------
 func _add_undoredo_action_for_erased_strokes() -> void:
-	var project: Project = ProjectManager.get_active_project()
-	if _removed_strokes.size():
-		project.undo_redo.create_action("Erase Stroke")
-		for stroke: BrushStroke in _removed_strokes:
-			_removed_strokes.erase(stroke)
-			project.undo_redo.add_do_method(Callable(_canvas, "_do_delete_stroke").bind(stroke))
-			project.undo_redo.add_undo_method(Callable(_canvas, "_undo_delete_stroke").bind(stroke))
-		project.undo_redo.commit_action()
-		project.dirty = true
+	if not _removed_strokes.is_empty():
+		_canvas.remove_strokes(_removed_strokes)
+		_removed_strokes.clear()
 
 # ------------------------------------------------------------------------------------------------
 func _update_bounding_boxes() -> void:
